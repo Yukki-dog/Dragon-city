@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Город Драконов - Расширенная</title>
+<style>
+:root{
+  --bg:#0e0f13;
+  --panel:#171923;
+  --panel-2:#1f2330;
+  --text:#e8ecf3;
+  --muted:#9aa3b2;
+  --accent:#8b5cf6;
+  --good:#22c55e;
+  --warn:#f59e0b;
+  --bad:#ef4444;
+  --scale:1;
+}
+body[data-device="mobile"]{--scale:1;}
+body[data-device="desktop"]{--scale:1.2;}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  font-family:system-ui, sans-serif;
+  color:var(--text);
+  background: radial-gradient(1200px 600px at 50% -200px, #1a1f33 0%, #0f1220 45%, #0b0d16 100%);
+}
+header{
+  display:flex;align-items:center;gap:12px;padding:12px;background:#1a1f33;position:sticky;top:0;z-index:10;
+}
+.logo{font-weight:700;font-size:18px;}
+button{
+  border:none;border-radius:10px;padding:8px 12px;
+  font-weight:600;cursor:pointer;background:#23283c;color:#e8ecf3;margin-left:6px;
+  transition:0.2s;
+}
+button:hover{filter:brightness(1.1);}
+main{
+  padding:12px; max-width:1000px;margin:0 auto; transform: scale(var(--scale)); transform-origin:top center;
+}
+.panels{display:grid;grid-template-columns:1.2fr 1fr;gap:12px;}
+@media(max-width:900px){.panels{grid-template-columns:1fr;}}
+.panel{
+  background:linear-gradient(180deg, var(--panel) 0%, var(--panel-2) 100%);
+  border:1px solid #22263a;border-radius:12px;padding:12px;box-shadow:0 6px 20px rgba(0,0,0,.3);
+}
+.big{display:grid;place-items:center;min-height:260px;position:relative;overflow:hidden;border-radius:12px;margin-bottom:12px;background:#101225;}
+.controls{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0;}
+.bar{background:#0f1220;border:1px solid #2a3050;border-radius:8px;padding:6px;margin-bottom:8px;}
+.bar .label{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-bottom:4px;}
+.bar .track{height:10px;background:#1b1f33;border-radius:6px;overflow:hidden;}
+.bar .val{height:100%;background:linear-gradient(90deg, #8b5cf6, #06b6d4);width:0%;}
+.dragon-wrap{position:relative;width:200px;height:180px;}
+.egg,.dragon-shape{transition:.5s ease;position:absolute;inset:0;width:100%;height:100%;}
+.hidden{opacity:0;transform:scale(0.9);}
+.achievements{display:grid;gap:6px;margin-top:6px;}
+.achievement{background:#131728;padding:6px;border-radius:8px;font-size:12px;color:#9aa3b2;transition:0.3s;}
+
+/* Анимации */
+@keyframes hatchShake{0%{transform:rotate(0deg);}25%{transform:rotate(10deg);}50%{transform:rotate(-10deg);}75%{transform:rotate(10deg);}100%{transform:rotate(0deg);}}
+.egg.hatching{animation:hatchShake 0.5s infinite;}
+@keyframes wingFlap{0%{transform:translateY(0px);}50%{transform:translateY(-5px);}100%{transform:translateY(0px);}}
+.dragon-shape .wing{animation:wingFlap 1s infinite;}
+
+/* Локации */
+.location{position:absolute;inset:0;border-radius:12px;opacity:0;transition:0.6s;}
+.location.active{opacity:1;}
+.forest{background:radial-gradient(circle at 50% 50%, #06470f 0%, #001a04 100%);}
+.volcano{background:radial-gradient(circle at 50% 50%, #4b0404 0%, #190101 100%);}
+.icecave{background:radial-gradient(circle at 50% 50%, #0e5b8c 0%, #000a11 100%);}
+
+/* Эффекты листьев/искр/снега */
+.effect{position:absolute;width:6px;height:6px;border-radius:50%;pointer-events:none;opacity:0.8;}
+.leaf{background:#22c55e;}
+.spark{background:#f59e0b;}
+.snow{background:#fff;}
+</style>
+</head>
+<body data-device="mobile">
+<header>
+<div class="logo">Город Драконов</div>
+<div style="flex:1"></div>
+<button id="deviceBtn">📱//💻</button>
+<button id="saveBtn" style="background:var(--accent)">Сохранить</button>
+<button id="resetBtn" style="background:var(--bad)">Сброс</button>
+</header>
+<main>
+<div class="panels">
+<div class="panel">
+<h2>Дракон</h2>
+<div class="big">
+<div class="location forest active" id="forest"></div>
+<div class="location volcano" id="volcano"></div>
+<div class="location icecave" id="icecave"></div>
+<div class="dragon-wrap">
+<svg class="egg" id="egg" viewBox="0 0 200 180">
+  <ellipse cx="100" cy="90" rx="40" ry="60" fill="white" stroke="#ccc" stroke-width="2"/>
+</svg>
+<svg class="dragon-shape hidden" id="dragonSVG" viewBox="0 0 200 180">
+  <ellipse cx="100" cy="100" rx="40" ry="30" fill="#8b5cf6"/>
+  <polygon class="wing" points="100,70 70,40 130,40" fill="#6d28d9"/>
+  <ellipse cx="80" cy="100" rx="6" ry="10" fill="#fff"/>
+  <ellipse cx="120" cy="100" rx="6" ry="10" fill="#fff"/>
+  <polygon class="tail" points="100,130 90,160 110,160" fill="#6d28d9"/>
+</svg>
+</div>
+</div>
+<div class="controls">
+<button onclick="feed()">Кормить 🍎</button>
+<button onclick="playDragon()">Играть 🎮</button>
+<button onclick="train()">Тренировать 💪</button>
+<button onclick="duel()">Дуэль ⚔️</button>
+<button onclick="changeLocation('forest')">🌳Лес</button>
+<button onclick="changeLocation('volcano')">🌋Вулкан</button>
+<button onclick="changeLocation('icecave')">❄️Ледяная пещера</button>
+</div>
+<div class="stats">
+<div class="bar"><div class="label">Здоровье <span id="hpVal">50</span></div><div class="track"><div class="val" id="hpBar"></div></div></div>
+<div class="bar"><div class="label">Счастье <span id="happyVal">50</span></div><div class="track"><div class="val" id="happyBar"></div></div></div>
+<div class="bar"><div class="label">Опыт <span id="expVal">0</span></div><div class="track"><div class="val" id="expBar"></div></div></div>
+<div class="bar"><div class="label">Сила <span id="powerVal">10</span></div><div class="track"><div class="val" id="powerBar"></div></div></div>
+</div>
+</div>
+<div class="panel">
+<h2>Ачивки</h2>
+<div class="achievements" id="achievements"></div>
+</div>
+</div>
+</main>
+<script>
+// Основные данные
+let dragon={hp:50,happy:50,exp:0,power:10,hatched:false,achievements:[],location:'forest'};
+const egg=document.getElementById('egg');
+const dragonSVG=document.getElementById('dragonSVG');
+const forest=document.getElementById('forest');
+const volcano=document.getElementById('volcano');
+const icecave=document.getElementById('icecave');
+const effects=[];
+
+// Прогресс-бары
+function updateBars(){
+  document.getElementById('hpVal').innerText=dragon.hp;
+  document.getElementById('hpBar').style.width=dragon.hp+'%';
+  document.getElementById('happyVal').innerText=dragon.happy;
+  document.getElementById('happyBar').style.width=dragon.happy+'%';
+  document.getElementById('expVal').innerText=dragon.exp;
+  document.getElementById('expBar').style.width=Math.min(dragon.exp,100)+'%';
+  document.getElementById('powerVal').innerText=dragon.power;
+  document.getElementById('powerBar').style.width=dragon.power*5+'%';
+}
+
+// Проверка вылупления
+function checkHatch(){
+  if(!dragon.hatched && dragon.exp>=10){
+    dragon.hatched=true;
+    egg.classList.add('hatching');
+    setTimeout(()=>{
+      egg.classList.add('hidden');
+      dragonSVG.classList.remove('hidden');
+      unlockAch('Вылупился!');
+    },1000);
+  }
+}
+
+// Действия
+function feed(){dragon.hp=Math.min(dragon.hp+10,100);dragon.happy=Math.min(dragon.happy+5,100);dragon.exp+=2;updateBars();checkHatch();spawnEffect();}
+function playDragon(){dragon.happy=Math.min(dragon.happy+10,100);dragon.exp+=3;updateBars();checkHatch();spawnEffect();}
+function train(){dragon.power+=1;dragon.exp+=4;updateBars();checkHatch();spawnEffect();}
+function duel(){
+  const res=Math.random();
+  if(res<0.5){dragon.hp=Math.max(dragon.hp-5,0);unlockAch('Проиграл дуэль :(');}
+  else{dragon.exp+=5;unlockAch('Выиграл дуэль!');}
+  updateBars();checkHatch();spawnEffect();
+}
+
+// Ачивки
+function unlockAch(name){
+  if(!dragon.achievements.includes(name)){
+    dragon.achievements.push(name);
+    const achDiv=document.createElement('div'); achDiv.className='achievement'; achDiv.innerText=name;
+    document.getElementById('achievements').appendChild(achDiv);
+  }
+}
+
+// Адаптация устройства
+document.getElementById('deviceBtn').onclick=()=>{
+  const body=document.body;
+  body.dataset.device=body.dataset.device==='mobile'?'desktop':'mobile';
+};
+
+// Сохранение и загрузка
+document.getElementById('saveBtn').onclick=saveGame;
+document.getElementById('resetBtn').onclick=()=>{if(confirm('Сбросить игру?')){localStorage.removeItem('dragonCity');location.reload();}};
+function saveGame(){localStorage.setItem('dragonCity',JSON.stringify(dragon)); alert('Сохранено!');}
+function loadGame(){
+  const save=localStorage.getItem('dragonCity');
+  if(save){dragon=JSON.parse(save);updateBars();if(dragon.hatched){egg.classList.add('hidden');dragonSVG.classList.remove('hidden');}}
+}
+loadGame();
+updateBars();
+
+// Локации
+function changeLocation(loc){
+  dragon.location=loc;
+  forest.classList.remove('active');
+  volcano.classList.remove('active');
+  icecave.classList.remove('active');
+  document.getElementById(loc).classList.add('active');
+}
+
+// Эффекты для локаций
+function spawnEffect(){
+  const locDiv=document.getElementById(dragon.location);
+  const el=document.createElement('div');
+  el.className='effect';
+  const size=Math.random()*6+4;
+  el.style.width=size+'px';
+  el.style.height=size+'px';
+  el.style.left=Math.random()*100+'%';
+  el.style.top=Math.random()*100+'%';
+  if(dragon.location==='forest') el.classList.add('leaf');
+  if(dragon.location==='volcano') el.classList.add('spark');
+  if(dragon.location==='icecave') el.classList.add('snow');
+  locDiv.appendChild(el);
+  setTimeout(()=>{el.remove();},1500);
+}
+setInterval(()=>{if(Math.random()<0.1) spawnEffect();},800);
+
+// Случайные события
+function randomEvent(){
+  const r=Math.random();
+  if(r<0.3){dragon.hp=Math.min(dragon.hp+5,100);unlockAch('Нашел травку!');}
+  else if(r<0.6){dragon.happy=Math.min(dragon.happy+5,100);unlockAch('Повеселился!');}
+  else {dragon.hp=Math.max(dragon.hp-5,0);unlockAch('Потерял здоровье!');}
+  updateBars();
+}
+setInterval(()=>{randomEvent();},15000);
+</script>
+</body>
+</html>
